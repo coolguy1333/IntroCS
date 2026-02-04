@@ -1,0 +1,509 @@
+from graphics import *
+from classes import *
+from random import *
+from time import *
+from math import *
+
+
+####################
+# Global Variables #
+####################
+
+death = Text(Point(650,300), "YOUR BOILER EXPLODED!!!")
+death.setSize(32)
+death.setStyle("bold")
+death.setTextColor("red")
+
+# Add to global variables near trainPassengers
+passengerDestinations = {1: 0, 2: 0, 3: 0}
+
+moneyPerPassenger = 5  # Change this to adjust earnings per passenger
+money = 0
+moneyLabel = Text(Point(600, 25), "$" + str(money))
+moneyLabel.setSize(32)
+moneyLabel.setStyle("bold")
+
+i = 0
+
+FPS = 0
+FPSText = Text(Point(30, 10), "FPS: " + str(FPS))
+
+coal = 100
+water = 200
+coalUsageRate = 1
+waterUsageRate = 2
+
+coalLabel = Text(Point(600, 60), "Coal: " + str(coal))
+coalLabel.setSize(18)
+coalLabel.setStyle("bold")
+
+waterLabel = Text(Point(600, 85), "Water: " + str(water))
+waterLabel.setSize(18)
+waterLabel.setStyle("bold")
+
+# Refill buttons
+refillCoalBtn = RectangleImageButton(500, 115, 100, 100, "./images/coal.png")
+refillWaterBtn = RectangleImageButton(600, 115, 100, 100, "./images/water.png")
+
+trainMove = True
+
+trainImage =  "./images/train_L_R.png"
+trainX = 75
+trainY = 325  
+trainSpeed = 50
+trainCap = 5
+trainPassengers = 0
+mapLevel = 0
+trainDir = "R"  # Initial direction
+snapSize = 50
+
+trainCapUpgrade = TrainUpgrade(790, 10, "./images/trainUpgrade.png", 100, "Capasity:", trainCap, 1.25)
+
+train = Image(Point(trainX, trainY), trainImage)
+
+trackPlacment = [
+    Image(Point(25, 350), "./images/stop_L.png"),
+    Image(Point(75, 350), "./images/track_L_R.png"),
+    Image(Point(125, 350), "./images/track_L_R.png"),
+    Image(Point(175, 350), "./images/track_L_R.png"),
+    Image(Point(225, 350), "./images/track_L_R.png"),
+    Image(Point(275, 350), "./images/track_L_R.png"),
+    Image(Point(325, 350), "./images/track_L_R.png"),
+    Image(Point(375, 350), "./images/track_L_R.png"),
+    Image(Point(425, 350), "./images/track_L_R.png"),
+    Image(Point(475, 350), "./images/track_L_R.png"),
+    Image(Point(525, 350), "./images/track_L_R.png"),
+    Image(Point(575, 350), "./images/track_L_R.png"),
+    Image(Point(625, 350), "./images/track_L_R.png"),
+    Image(Point(675, 350), "./images/track_L_R.png"),
+    Image(Point(725, 350), "./images/track_L_R.png"),
+    Image(Point(775, 350), "./images/track_L_R.png"),
+    Image(Point(825, 350), "./images/track_L_R.png"),
+    Image(Point(875, 350), "./images/track_L_R.png"),
+    Image(Point(925, 350), "./images/track_L_R.png"),
+    Image(Point(975, 350), "./images/track_L_R.png"),
+    Image(Point(1025, 350), "./images/track_L_R.png"),
+    Image(Point(1075, 350), "./images/track_L_R.png"),
+    Image(Point(1125, 350), "./images/track_L_R.png"),
+    Image(Point(1175, 350), "./images/track_L_R.png"),
+    Image(Point(1225, 350), "./images/track_L_R.png"),
+    Image(Point(1275, 350), "./images/stop_R.png"),
+    Image(Point(225, 350), "./images/track_L_T.png"),
+    Image(Point(225, 350), "./images/track_T_R.png"),
+    Image(Point(225, 300), "./images/track_T_B.png"),
+    Image(Point(225, 250), "./images/track_T_B.png"),
+    Image(Point(225, 200), "./images/track_T_B.png"),
+    Image(Point(225, 150), "./images/track_T_B.png"),
+    Image(Point(225, 100), "./images/track_T_B.png"),
+    Image(Point(225, 50), "./images/track_T_B.png"),
+    Image(Point(225, 0), "./images/stop_D.png"),
+    Image(Point(625, 350), "./images/track_L_B.png"),  
+    Image(Point(625, 350), "./images/track_B_R.png"),  
+    Image(Point(625, 400), "./images/track_T_B.png"),
+    Image(Point(625, 450), "./images/track_T_B.png"),
+    Image(Point(625, 500), "./images/track_T_B.png"),
+    Image(Point(625, 550), "./images/track_T_B.png"),
+    Image(Point(625, 600), "./images/stop_U.png")
+]
+
+stationPopularity = 2
+stationsWaiting = [0, 0, 0]
+
+lastStation = 0
+
+stationPopularityUpgrade = TrainUpgrade(790, 115, "./images/trainUpgrade.png", 100, "Popularity:", stationPopularity, 1.5)
+
+stationPlacment = [
+    Image(Point(1225, 310), "./images/station_.png"),
+    Image(Point(265, 75), "./images/station_T_B.png"),
+    Image(Point(675, 525), "./images/station_T_B.png")
+]
+
+stationNumber = [
+    Text(Point(1225, 300), "1"),
+    Text(Point(272.5, 75), "2"),
+    Text(Point(682.5, 525), "3") 
+]
+
+stationPeople = [
+    Text(Point(1225, 280), "Wating: " + str(stationsWaiting[0])),
+    Text(Point(290, 135), "Wating: " + str(stationsWaiting[1])),
+    Text(Point(700, 585), "Wating: " + str(stationsWaiting[2]))
+]
+
+# Define logic of allowed directions for each tile
+trackLogic = {
+    (75, 350): ["R"],
+    (125, 350): ["L", "R"],
+    (175, 350): ["L", "R"],
+    (225, 350): ["L", "R", "U"],
+    (275, 350): ["L", "R"],
+    (325, 350): ["L", "R"],
+    (375, 350): ["L", "R"],
+    (425, 350): ["L", "R"],
+    (475, 350): ["L", "R"],
+    (525, 350): ["L", "R"],
+    (575, 350): ["L", "R"],
+    (625, 350): ["L", "R","D"],
+    (625, 400): ["U", "D"],
+    (625, 450): ["U", "D"],
+    (625, 500): ["U", "D"],
+    (625, 550): ["U"],
+    (675, 350): ["L", "R"],
+    (725, 350): ["L", "R"],
+    (775, 350): ["L", "R"],
+    (825, 350): ["L", "R"],
+    (875, 350): ["L", "R"],
+    (925, 350): ["L", "R"],
+    (975, 350): ["L", "R"],
+    (1025, 350): ["L", "R"],
+    (1075, 350): ["L", "R"],
+    (1125, 350): ["L", "R"],
+    (1175, 350): ["L", "R"],
+    (1225, 350): ["L", "R"],
+    (225, 300): ["U", "D"],
+    (225, 250): ["U", "D"],
+    (225, 200): ["U", "D"],
+    (225, 150): ["U", "D"],
+    (225, 100): ["D"],
+
+}
+
+
+##################
+# Helper Methods #
+##################
+
+def FPS(graphicsWindow):
+    sleep(1/37) # 30 FPS
+    # FPS counter update
+    fps_counter.update()
+    fps = fps_counter.get_fps()
+    FPSText.undraw()
+    FPSText.setText("FPS: " + str(round(fps)))
+    FPSText.draw(graphicsWindow)
+
+def setup(graphicsWindow):
+    for track in trackPlacment:
+        track.draw(graphicsWindow)
+    for station in stationPlacment:
+        station.draw(graphicsWindow)
+    for number in stationNumber:
+        number.setSize(10)
+        number.setStyle("bold")
+        number.setTextColor("white")
+        number.draw(graphicsWindow)
+    for people in stationPeople:
+        people.setSize(12)
+        people.setStyle("bold")
+        people.draw(graphicsWindow)
+    train.draw(graphicsWindow)
+    trainCapUpgrade.draw(graphicsWindow)
+    stationPopularityUpgrade.draw(graphicsWindow)
+    moneyLabel.draw(graphicsWindow)
+
+    coalLabel.draw(graphicsWindow)
+    waterLabel.draw(graphicsWindow)
+
+    refillCoalBtn.draw(graphicsWindow)
+    refillWaterBtn.draw(graphicsWindow)
+
+def trainUpdate(graphicsWindow):
+    global train, trainImage
+    train.undraw()
+    train = Image(Point(trainX, trainY), trainImage)
+    train.draw(graphicsWindow)
+
+def snapToGrid(x, y):
+    # Return the exact matching tile in trackLogic that's closest
+    closest_tile = None
+    closest_dist = float("inf")
+    for tile in trackLogic.keys():
+        dist = hypot(tile[0] - x, tile[1] - y)
+        if dist < closest_dist:
+            closest_tile = tile
+            closest_dist = dist
+    return closest_tile
+
+def getDirectionDif(direction):
+    return {
+        "L": (-snapSize, 0),
+        "R": (snapSize, 0),
+        "U": (0, -snapSize),
+        "D": (0, snapSize)
+    }.get(direction, (0, 0))
+
+def peopleToStation(graphicsWindow):
+    global stationPeople, stationPopularity, i, trainX, trainY
+    global trainPassengers, lastStation, passengerDestinations, stationsWaiting
+    global money, moneyLabel, moneyPerPassenger
+
+    for i in range(len(stationsWaiting)):
+        stationsWaiting[i] += randint(-1, stationPopularityUpgrade.var)
+        if stationsWaiting[i] < 0:
+            stationsWaiting[i] = 0
+
+    if trainX == 1225 and trainY == 325:  # Station 1
+        print("Train arrived at station 1")
+
+        # Drop-off logic
+        dropOffCount = passengerDestinations.get(1, 0)
+        trainPassengers -= dropOffCount
+        passengerDestinations[1] = 0
+        print(f"Dropped off {dropOffCount} passengers at station 1")
+
+        # Add money
+        money += dropOffCount * moneyPerPassenger
+        updateMoneyLabel(graphicsWindow)
+
+        # Boarding logic
+        totalWaiting = stationsWaiting[0]
+        spaceAvailable = trainCap - trainPassengers
+
+        lastStation = 1
+
+        if totalWaiting > spaceAvailable:
+            trainPassengers += spaceAvailable
+            stationsWaiting[0] = totalWaiting - spaceAvailable
+            passengerDestinations[2] += spaceAvailable
+        else:
+            trainPassengers += totalWaiting
+            stationsWaiting[0] = 0
+            passengerDestinations[2] += totalWaiting
+
+        print(f"Passengers onboard: {trainPassengers}")
+
+    elif trainX == 225 and trainY == 75:  # Station 2
+        print("Train arrived at station 2")
+
+        # Drop-off logic
+        dropOffCount = passengerDestinations.get(2, 0)
+        trainPassengers -= dropOffCount
+        passengerDestinations[2] = 0
+        print(f"Dropped off {dropOffCount} passengers at station 2")
+
+        # Add money
+        money += dropOffCount * moneyPerPassenger
+        updateMoneyLabel(graphicsWindow)
+
+        # Boarding logic
+        totalWaiting = stationsWaiting[1]
+        spaceAvailable = trainCap - trainPassengers
+
+        lastStation = 2
+
+        if totalWaiting > spaceAvailable:
+            trainPassengers += spaceAvailable
+            stationsWaiting[1] = totalWaiting - spaceAvailable
+            passengerDestinations[1] += spaceAvailable
+        else:
+            trainPassengers += totalWaiting
+            stationsWaiting[1] = 0
+            passengerDestinations[1] += totalWaiting
+
+        print(f"Passengers onboard: {trainPassengers}")
+
+    elif trainX == 625 and trainY == 550:  # Station 3
+        print("Train arrived at station 3")
+
+        dropOffCount = passengerDestinations.get(3, 0)
+        trainPassengers -= dropOffCount
+        passengerDestinations[3] = 0
+        print(f"Dropped off {dropOffCount} passengers at station 3")
+
+        money += dropOffCount * moneyPerPassenger
+        updateMoneyLabel(graphicsWindow)
+
+        totalWaiting = stationsWaiting[2]
+        spaceAvailable = trainCap - trainPassengers
+
+        lastStation = 3
+
+        if totalWaiting > spaceAvailable:
+            trainPassengers += spaceAvailable
+            stationsWaiting[2] = totalWaiting - spaceAvailable
+            # Send new passengers to a random other station
+            for _ in range(spaceAvailable):
+                dest = choice([1, 2])
+                passengerDestinations[dest] += 1
+        else:
+            trainPassengers += totalWaiting
+            stationsWaiting[2] = 0
+            for _ in range(totalWaiting):
+                dest = choice([1, 2])
+                passengerDestinations[dest] += 1
+
+        print(f"Passengers onboard: {trainPassengers}")
+
+        # Redraw station people counts
+    
+    for i in range(len(stationPeople)):
+        stationPeople[i].undraw()
+        stationPeople[i].setText("Waiting: " + str(stationsWaiting[i]))
+        stationPeople[i].draw(graphicsWindow)
+        # print("Updated waiting counts:", stationsWaiting)
+            
+def updateMoneyLabel(graphicsWindow):
+    global money, moneyLabel
+    moneyLabel.undraw()
+    moneyLabel.setText("$" + str(money))
+    moneyLabel.draw(graphicsWindow)
+
+def updateCoalLabel(graphicsWindow):
+    global coal, coalLabel
+    coalLabel.undraw()
+    coalLabel.setText("Coal: " + str(coal))
+    coalLabel.draw(graphicsWindow)
+
+def updateWaterLabel(graphicsWindow):
+    global water, waterLabel
+    waterLabel.undraw()
+    waterLabel.setText("Water: " + str(water))
+    waterLabel.draw(graphicsWindow)
+
+def update(graphicsWindow):
+    global trainX, trainY, trainImage, trainDir, i, trainCap, trainMove
+    global money, coal, water  # Make sure resources are modifiable
+
+    FPS(graphicsWindow)
+
+    i += 1
+    if (i + 1) % 32 == 0:
+        peopleToStation(graphicsWindow)
+
+    keyboard = graphicsWindow.checkKey()
+    dirPressed = ""
+
+    if trainMove == False:
+        if coal >= 1 or water >= 1:
+            print("Train has Refilled.")
+            trainMove = True
+
+    if trainMove == True:
+
+        if keyboard == "Escape":
+            graphicsWindow.close()
+            print("Window closed!")
+
+        if keyboard == "Right":
+            dirPressed = "R"
+            trainImage = "./images/train_L_R.png"
+            print("Right arrow key pressed")
+        elif keyboard == "Left":
+            dirPressed = "L"
+            trainImage = "./images/train_R_L.png"
+            print("Left arrow key pressed")
+        elif keyboard == "Up":
+            dirPressed = "U"
+            trainImage = "./images/train^.png"
+            print("Up arrow key pressed")
+        elif keyboard == "Down":
+            dirPressed = "D"
+            trainImage = "./images/train,.png"
+            print("Down arrow key pressed") 
+
+        if dirPressed:
+            dx, dy = getDirectionDif(dirPressed)
+            newX = trainX + dx
+            newY = trainY + dy
+
+            currentTile = snapToGrid(trainX, trainY)
+            newTile = snapToGrid(newX, newY)
+
+            if currentTile != newTile:
+                if currentTile in trackLogic and newTile in trackLogic:
+                    opposite = {"L": "R", "R": "L", "U": "D", "D": "U"}
+
+                    if dirPressed in trackLogic[currentTile] and opposite[dirPressed] in trackLogic[newTile]:
+                        trainX = newX
+                        trainY = newY
+                        trainDir = dirPressed
+                        trainUpdate(graphicsWindow)
+
+                        # Consume resources
+                        coal -= coalUsageRate
+                        water -= waterUsageRate
+                        updateCoalLabel(graphicsWindow)
+                        updateWaterLabel(graphicsWindow)
+
+                        # Stop movement if out of fuel/water
+                        if coal <= 0:
+                            print("Train has run out of resources! Refill needed.")
+                            trainMove = False
+                        if water <= 0:
+                            trainX = randint(trainX - 50, trainX + 50)
+                            trainY = randint(trainY - 50, trainY + 50)
+                            deathboom = Image(Point(trainX, trainY - 75), "./images/BIG_BOOM.png")
+                            trainUpdate(graphicsWindow)
+                            deathboom.draw(graphicsWindow)
+                            death.draw(graphicsWindow)
+                            sleep(2.5)
+                            graphicsWindow.close()
+                    else:
+                        print(f"Invalid direction: {dirPressed} from {currentTile} to {newTile}")
+                else:
+                    print(f"Invalid grid: {currentTile} or {newTile}")
+            else:
+                print(f"Train did not move. Position is still at {currentTile}")
+
+    # Mouse click handling
+    mouseClick = graphicsWindow.checkMouse()
+    if mouseClick:
+        mx = mouseClick.getX()
+        my = mouseClick.getY()
+
+        # Capacity Upgrade
+        if trainCapUpgrade.clickedInside(mx, my) and money >= trainCapUpgrade.nextCost:
+            money -= trainCapUpgrade.nextCost
+            trainCapUpgrade.purchase()
+            trainCap += 5
+            trainCapUpgrade.var = trainCap
+            trainCapUpgrade.CPSLable.setText(str(trainCap))
+            updateMoneyLabel(graphicsWindow)
+            print(f"Train capacity upgraded to {trainCap}")
+
+        # Station Popularity Upgrade
+        if stationPopularityUpgrade.clickedInside(mx, my) and money >= stationPopularityUpgrade.nextCost:
+            money -= stationPopularityUpgrade.nextCost
+            stationPopularityUpgrade.purchase()
+            stationPopularityUpgrade.var += 1
+            stationPopularityUpgrade.CPSLable.setText(str(stationPopularityUpgrade.var))
+            updateMoneyLabel(graphicsWindow)
+            print(f"Station popularity upgraded to {stationPopularityUpgrade.var}")
+
+        # Refill Coal
+        if refillCoalBtn.clickedInside(mx, my) and money >= 10:
+            coal += 50
+            money -= 10
+            updateCoalLabel(graphicsWindow)
+            updateMoneyLabel(graphicsWindow)
+            print("Coal refilled!")
+
+        # Refill Water
+        if refillWaterBtn.clickedInside(mx, my) and money >= 10:
+            water += 50
+            money -= 10
+            updateWaterLabel(graphicsWindow)
+            updateMoneyLabel(graphicsWindow)
+            print("Water refilled!")
+
+
+###################
+# Executable Code #
+###################
+
+
+win = GraphWin("Train Sim v1.8.0 (not for resale)", 1300, 700)
+
+setup(win)
+
+print("Window opened!")  # Debugging print to check window
+
+fps_counter = FPSCounter()
+
+##################
+# Main Game Loop #
+##################
+S
+while True:
+    update(win)
