@@ -212,7 +212,8 @@ def update(seconds):
     global grandmaUpgrade
     global cookies
     for upgrade in upgrades:
-        cookies = cookies + upgrade.CPS * upgrade.numOwned * seconds
+        cookies = cookies + upgrade.CPS * upgrade.numOwned * seconds * 100000000000000000000000000000000000000000000000000000000
+    print(str(cookies))
 
     if mouse:
         if cookieButton.clickedInside(mouse.getX(), mouse.getY()):
