@@ -10,7 +10,7 @@ os.system('color')
 BLACK = '\033[30m'
 RED = '\033[31m'
 GREEN = '\033[32m'
-YELLOW = '\033[33m' # orange on some systems
+YELLOW = '\033[33m'
 BLUE = '\033[34m'
 MAGENTA = '\033[35m'
 CYAN = '\033[36m'
@@ -27,7 +27,7 @@ WHITE = '\033[97m'
 BACKGROUND_BLACK = '\033[40m'
 BACKGROUND_RED = '\033[41m'
 BACKGROUND_GREEN = '\033[42m'
-BACKGROUND_YELLOW = '\033[43m' # orange on some systems
+BACKGROUND_YELLOW = '\033[43m'
 BACKGROUND_BLUE = '\033[44m'
 BACKGROUND_MAGENTA = '\033[45m'
 BACKGROUND_CYAN = '\033[46m'
@@ -41,7 +41,7 @@ BACKGROUND_BRIGHT_MAGENTA = '\033[105m'
 BACKGROUND_BRIGHT_CYAN = '\033[106m'
 BACKGROUND_WHITE = '\033[43m'
 
-RESET = '\033[0m' # called to return to standard terminal text color
+RESET = '\033[0m'
 
 #track sections
 forwatrac = "----"
